@@ -1,0 +1,71 @@
+package main
+
+import (
+	"fmt"
+	"net"
+	"os"
+	"strconv"
+)
+
+/* A Simple function to verify error */
+func CheckError(err error) {
+	if err != nil {
+		fmt.Println("Error: ", err)
+		os.Exit(0)
+	}
+}
+
+//"Heiser"
+
+//Nettverksmodul
+func sender(port int) {
+	ServerAddr, err := net.ResolveUDPAddr("udp", "129.241.187.23:"+strconv.Itoa(port))
+	CheckError(err)
+
+	ServerConn, err := net.DialUDP("udp", nil, ServerAddr)
+	CheckError(err)
+
+	state := make(chan string, 3)
+	state <- "abcd"
+	state <- "2222"
+	state <- "wc3"
+	msg := <-state
+	msg = <-state
+	ServerConn.Write([]byte(msg))
+
+}
+
+func receiver(port int) {
+	/* Preparing an address at port 30000*/
+	ServerAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
+	CheckError(err)
+
+	/* Listening at selected port */
+	ServerConn, err := net.ListenUDP("udp", ServerAddr)
+	CheckError(err)
+
+	//defer ServerConn.Close()
+
+	buf := make([]byte, 1024)
+
+	for {
+		n, addr, err := ServerConn.ReadFromUDP(buf)
+		fmt.Println("Received ", string(buf[0:n]), " from ", addr)
+
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
+	}
+
+}
+
+func main() {
+
+	go sender(20004)
+	//go receiver(30000)
+	//go receiver(20003)
+	go receiver(20004)
+
+	select {}
+
+}
